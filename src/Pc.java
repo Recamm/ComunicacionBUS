@@ -57,11 +57,18 @@ public class Pc {
     }
 
     public void enviarMensaje(String ipDestino, int puertoDestino, String msg) throws IOException {
-        if(!ipDestino.equals(this.ip) || puertoDestino != this.puerto){
-            DatagramSocket ds = new DatagramSocket();
-            InetAddress ip = InetAddress.getByName(ipDestino);
-            DatagramPacket dp = new DatagramPacket(msg.getBytes(), msg.length(), ip, puertoDestino);
-            ds.send(dp);
+        DatagramSocket ds = null;
+        try {
+            if (!ipDestino.equals(this.ip) || puertoDestino != this.puerto) {
+                ds = new DatagramSocket();
+                InetAddress ip = InetAddress.getByName(ipDestino);
+                DatagramPacket dp = new DatagramPacket(msg.getBytes(), msg.length(), ip, puertoDestino);
+                ds.send(dp);
+            }
+        } catch (IOException e) {
+            System.err.println("Error al enviar el mensaje: " + e.getMessage());
+        }
+        if (ds != null && !ds.isClosed()) {
             ds.close();
         }
     }
