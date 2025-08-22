@@ -4,9 +4,9 @@ import java.util.*;
 import java.net.*;
 
 public class hiloPc extends Thread{
+    final Socket s;
     final DataInputStream dis;
     final DataOutputStream dos;
-    final Socket s;
     final Pc pcCorrespondiente;
 
 
@@ -18,7 +18,7 @@ public class hiloPc extends Thread{
         this.pcCorrespondiente = pcCorrespondiente;
     }
 
-    public void recibirYVerificar(String ipDestino, int puertoDestino, String ipReenvio, int puertoReenvio) throws IOException {
+    public void recibirYVerificar(String ipDestino, int puertoDestino) throws IOException {
         DatagramSocket ds = null;
         try {
             ds = new DatagramSocket(puertoDestino);
@@ -31,14 +31,21 @@ public class hiloPc extends Thread{
 
                 System.out.println("Mensaje recibido: " + mensaje);
 
+                // Obtener la dirección IP y el puerto de la pc que envio el mensaje
+                 InetAddress clientAddress = s.getInetAddress();
+                 int clientPort = s.getPort();
+                 // clientAddress.getHostAddress() clientPort);
+
+
                 if (mensaje.startsWith(ipDestino)) {
                     System.out.println("Este mensaje es para esta PC");
                     System.out.println(dis.readUTF());
                 } else {
-                    InetAddress ip = InetAddress.getByName(ipReenvio);
-                    DatagramPacket dpReenvio = new DatagramPacket(dp.getData(), dp.getLength(), ip, puertoReenvio);
-                    ds.send(dpReenvio);
-                    System.out.println("Mensaje reenviado a: " + ipReenvio + ":" + puertoReenvio);
+                    for(Pc pc: pcCorrespondiente.getPares()){
+                        if(!pc.getIp().equals(clientAddress.getHostAddress())  && pc.getPuerto() != clientPort){
+                            pc.enviarMensaje(pc.getIp(), pc.getPuerto(), mensaje);
+                        }
+                    }
                 }
             }
         } catch (IOException e) {

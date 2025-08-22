@@ -73,4 +73,8 @@ public class Pc {
         }
     }
 
+    public static void main(String[] args) {
+
+    }
+
 }
