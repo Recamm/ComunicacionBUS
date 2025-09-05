@@ -1,6 +1,6 @@
+package uno;
+
 import java.io.*;
-import java.text.*;
-import java.util.*;
 import java.net.*;
 
 public class hiloPc extends Thread{
@@ -8,6 +8,7 @@ public class hiloPc extends Thread{
     final DataInputStream dis;
     final DataOutputStream dos;
     final Pc pcCorrespondiente;
+    private static Boolean whilehilo = true;
 
 
     // Constructor
@@ -33,19 +34,21 @@ public class hiloPc extends Thread{
 
                 // Obtener la dirección IP y el puerto de la pc que envio el mensaje
                  InetAddress clientAddress = s.getInetAddress();
-                 int clientPort = s.getPort();
+                 // int clientPort = s.getPort();
                  // clientAddress.getHostAddress() clientPort);
 
 
                 if (mensaje.startsWith(ipDestino)) {
                     System.out.println("Este mensaje es para esta PC");
                     System.out.println(dis.readUTF());
+                    hiloPc.whilehilo = false;
                 } else {
-                    for(Pc pc: pcCorrespondiente.getPares()){
-                        if(!pc.getIp().equals(clientAddress.getHostAddress())  && pc.getPuerto() != clientPort){
-                            pc.enviarMensaje(pc.getIp(), pc.getPuerto(), mensaje);
+                    for(Pc pcPar: pcCorrespondiente.getPares()){
+                        if(!pcPar.getIp().equals(clientAddress.getHostAddress())){
+                            pcPar.enviarMensaje(pcPar.getIp(), pcPar.getPuerto(), mensaje);
                         }
                     }
+                    hiloPc.whilehilo = false;
                 }
             }
         } catch (IOException e) {
@@ -53,6 +56,18 @@ public class hiloPc extends Thread{
         }
         if (ds != null && !ds.isClosed()) {
             ds.close();
+        }
+    }
+
+    @Override
+    public void run(){
+        while(whilehilo){
+            try{
+                recibirYVerificar(Pc.getIp(), pcCorrespondiente.getPuerto());
+            }
+            catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 }
