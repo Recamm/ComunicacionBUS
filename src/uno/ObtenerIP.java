@@ -1,29 +1,47 @@
 package uno;
 
-import java.net.InetAddress;
-import java.net.InterfaceAddress;
-import java.net.NetworkInterface;
-import java.net.SocketException;
+import java.net.*;
+import java.util.Enumeration;
 
 public class ObtenerIP {
-    public static String getIPAddress(String nombreInterfaz) {
+    public static String getIPAddress() {
         try {
-            NetworkInterface networkInterface = NetworkInterface.getByName(nombreInterfaz);
-            if (networkInterface != null) {
-                for (InterfaceAddress interfaceAddress : networkInterface.getInterfaceAddresses()) {
-                    InetAddress address = interfaceAddress.getAddress();
-                    if (address != null && !address.isLoopbackAddress() && address.getAddress().length == 4) { // IPv4
-                        return address.getHostAddress();
+            // Obtener todas las interfaces de red disponibles en la máquina
+            Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
+
+            while (interfaces.hasMoreElements()) {
+                NetworkInterface networkInterface = interfaces.nextElement();
+
+                // Asegurarse de que la interfaz esté activa y no sea la interfaz de loopback
+                if (networkInterface.isUp() && !networkInterface.isLoopback()) {
+                    // Recorrer todas las direcciones de la interfaz
+                    for (InterfaceAddress interfaceAddress : networkInterface.getInterfaceAddresses()) {
+                        InetAddress address = interfaceAddress.getAddress();
+
+                        // Asegurarse de que la dirección sea IPv4 y no sea loopback
+                        if (address instanceof Inet4Address && !address.isLoopbackAddress()) {
+                            return address.getHostAddress();  // Retornar la primera IP válida encontrada
+                        }
                     }
                 }
-            } else {
-                System.out.println("La interfaz '" + nombreInterfaz + "' no fue encontrada.");
             }
         } catch (SocketException e) {
             e.printStackTrace();
         }
-        return null;
+
+        return null;  // Si no se encuentra ninguna IP, devolver null
     }
+
+    public static void main(String[] args) {
+        String ip = getIPAddress();  // Obtener la IP
+
+        if (ip == null) {
+            System.out.println("No se encontraron direcciones IP.");
+        } else {
+            System.out.println("Dirección IP encontrada: " + ip);
+        }
+    }
+}
 
     /*
         NetworkInterface es una clase que representa interfaces de red, algunos tipos serian
@@ -36,4 +54,3 @@ public class ObtenerIP {
         una lista con todas las ip de una interfaz y luego con un for las recorremos hasta
         encontrar la que necesitamos
      */
-}

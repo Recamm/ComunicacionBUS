@@ -1,64 +1,50 @@
 package uno;
 
-import java.io.*;
+import java.io.IOException;
 import java.net.*;
 
 public class Server {
     private static Pc pcCorrespondiente;
 
     public static void main(String[] args) {
-        try{
-            pcCorrespondiente = new Pc(Inet4Address.getLocalHost().getHostAddress(), 8888);
-        }
-        catch (UnknownHostException e){
-            System.out.println(e.getMessage());
-        }
-        // Las ip de las pc de los costados estan en 172.16.x.x porque esas x hay que
-        // reemplazarlas por los numeros correspondientes a las ip de las pc
-        // en caso de ser una pc de un extremo borrar la linea 14 y 16
-        Pc pcCostado1 = new Pc("172.16.x.x", 8888);
-        Pc pcCostado2 = new Pc("172.16.x.x", 8888);
-        pcCorrespondiente.agregarPar(pcCostado1);
-        pcCorrespondiente.agregarPar(pcCostado2);
+        DatagramSocket ds = null;
+        try {
+            pcCorrespondiente = new Pc(9999);
 
-        ServerSocket ss = null;
-        try{
-            // Puerto el cual el servidor escucha
-            ss = new ServerSocket(8888);
+            Pc pcCostado1 = new Pc("172.16.4.170", 9999);
+            Pc pcCostado2 = new Pc("172.16.4.200", 9999);
+            pcCorrespondiente.agregarPar(pcCostado1);
+            pcCorrespondiente.agregarPar(pcCostado2);
+
+            // Crear socket sin bind inicial
+            ds = new DatagramSocket((SocketAddress) null);
+            ds.setReuseAddress(true);
+            ds.bind(new InetSocketAddress(9999));
+
+            System.out.println("Escuchando en UDP en puerto 9999...");
+
+            // Usar sólo un hilo para recibir, o si usas varios hilos usar el mismo socket
+            Thread t = new hiloPc(ds, pcCorrespondiente);
+            t.start();
+
+            // Esperar que el hilo termine
+            t.join();  // Si quieres que el servidor espere hasta que termine el hilo
+
+        } catch (BindException be) {
+            System.err.println("No se pudo iniciar el servidor porque la dirección/puerto ya están en uso: " + be.getMessage());
+            be.printStackTrace();
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            System.err.println("Error al iniciar el servidor: " + e.getMessage());
+            e.printStackTrace();
+        } catch (InterruptedException e) {
+            System.err.println("El hilo fue interrumpido: " + e.getMessage());
+            e.printStackTrace();
         }
 
-        System.out.println("Escuchando...");
-        // Loop para esperar el packete llegante
-        while (true) {
-            Socket s = null;
-
-            try {
-                // El objeto socket recibe la peticion del cliente
-                s = ss.accept();
-
-                // Obtiene los inpus y output streams
-                // Contiene el mensaje
-                DataInputStream dis = new DataInputStream(s.getInputStream());
-                // Para responderle al que envio el msg
-                DataOutputStream dos = new DataOutputStream(s.getOutputStream());
-
-                System.out.println("Nuevo hilo asignado al cliente");
-
-                // Crea un hilo nuevo
-                Thread t = new hiloPc(s, dis, dos, pcCorrespondiente);
-                t.run();
-
-            }
-            catch (Exception e){
-                try{
-                    s.close();
-                } catch (IOException ex) {
-                    throw new RuntimeException(ex);
-                }
-                e.printStackTrace();
-            }
+        // Cerrar el socket explícitamente después de que el hilo termine
+        if (ds != null && !ds.isClosed()) {
+            ds.close();
+            System.out.println("Socket cerrado correctamente.");
         }
     }
 }
