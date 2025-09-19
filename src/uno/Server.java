@@ -10,11 +10,7 @@ public class Server {
         DatagramSocket ds = null;
         try {
             pcCorrespondiente = new Pc(9999);
-
-            Pc pcCostado1 = new Pc("172.16.4.170", 9999);
-            Pc pcCostado2 = new Pc("172.16.4.200", 9999);
-            pcCorrespondiente.agregarPar(pcCostado1);
-            pcCorrespondiente.agregarPar(pcCostado2);
+            System.out.println("size pares: " + pcCorrespondiente.getPares().size());
 
             // Crear socket sin bind inicial
             ds = new DatagramSocket((SocketAddress) null);

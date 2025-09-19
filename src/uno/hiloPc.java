@@ -24,13 +24,16 @@ public class hiloPc extends Thread {
 
             InetAddress clientAddress = dp.getAddress();
 
+            System.out.println(mensaje);
             if (mensaje.startsWith(ipLocal + ":")) {
                 String contenido = mensaje.substring(mensaje.indexOf(":") + 1).trim();
                 System.out.println("Mensaje recibido: " + contenido);
             } else {
+                System.out.println("size pareees: " + pcCorrespondiente.getPares().size());
                 for (Pc pcPar : pcCorrespondiente.getPares()) {
                     if (!pcPar.getIp().equals(clientAddress.getHostAddress())) {
-                        pcPar.enviarMensaje(pcPar.getIp(), pcPar.getPuerto(), mensaje);
+                        System.out.println(pcPar.getIp());
+                        pcPar.reenviarMensaje(pcPar.getIp(), pcPar.getPuerto(), mensaje);
                     }
                 }
             }
